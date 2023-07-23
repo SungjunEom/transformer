@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 import math
-# from helper import expand_mask
 
 class Attention(nn.Module):
     def __init__(self):
