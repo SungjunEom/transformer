@@ -1,6 +1,6 @@
 import torch
-import torch.nn.functional as F
 from torch import nn
+import torch.nn.functional as F
 import math
 
 class Attention(nn.Module):
@@ -171,17 +171,18 @@ class AbsolutePositionalEncoding(nn.Module):
         return x
 
 class Transformer(nn.Module):
-    def __init__(self, n_layer=6, n_head=8, d_model=512, d_k=64, dropout=0.0):
+    def __init__(self, n_layer=6, n_head=8, d_model=512, d_k=64, dropout=0.0, input_vocab=5000):
         super().__init__()
         self.pos_enc = AbsolutePositionalEncoding(d_model)
+        self.input_embedding = nn.Linear(input_vocab, d_model)
         self.transformer_encoder = TransformerEncoder(n_layer, n_head, d_model, d_k, dropout)
         self.transformer_decoder = TransformerDecoder(n_layer, n_head, d_model, d_k, dropout)
         self.linear = nn.Linear(d_model, d_model)
         self.softmax = nn.Softmax()
 
     def forward(self, src, tgt, tgt_mask): # tgt_mask = [[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
-        src = self.pos_enc(src)
-        tgt = self.pos_enc(tgt)
+        src = self.pos_enc(self.input_embedding(src))
+        tgt = self.pos_enc(self.input_embedding(tgt)) # for translation task, create an output embedding
         x = self.transformer_encoder(src)
         output = self.transformer_decoder(tgt, x, x, tgt_mask)
         output = self.softmax(self.linear(output))
