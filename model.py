@@ -12,7 +12,7 @@ class Attention(nn.Module):
         self.d_k = q.size()[-1]
         x = torch.matmul(q, torch.transpose(k, -1, -2)) / math.sqrt(self.d_k)
         if mask is not None:
-            x = x.masked_fill(mask==0,-9e15) 
+            x = x.masked_fill(mask==0,-9e15)
         attention = self.softmax(x)
         x = torch.matmul(attention, v)
         return x, attention
@@ -35,11 +35,11 @@ class MultiHeadAttention(nn.Module):
         nn.init.xavier_uniform_(self.o_proj.weight)
         self.o_proj.bias.data.fill_(0)
     
-    def forward(self, x, mask=None, return_attn=False): # x=[q, k, v], mask=[[1],[1],[0],[0],[0]]
+    def forward(self, x, mask=None, return_attn=False): # x=[q, k, v], mask=[[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
         n_batch, n_seq, _ = x.size()
         x = self.qkv_proj(x) # [Q K V]
         x = x.reshape(n_batch, self.n_head, n_seq, 3*self.d_k)
-        if mask is not None: # mask=[[1],[1],[0],[0],[0]]
+        if mask is not None: # mask=[[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
             mask = mask.repeat(1,self.d_k)
         q, k, v = torch.chunk(x,3,dim=-1) # q.size() = (n_batch, self.n_head, n_seq, self.d_k)
         x, attn = self.attention(q, k, v, mask=mask) # x.size() = (n_batch, self.n_head, n_seq, d_v(=self.d_k))
@@ -97,7 +97,7 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-    def forward(self, x, k, v, mask): # mask = [[1],[1],[1],[0],[0]...]
+    def forward(self, x, k, v, mask): # mask=[[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
         x_tmp = self.norm1(x)
         x_tmp = x_tmp.repeat(1,1,3)
         attn1 = self.masked_mha(x_tmp, mask=mask)
@@ -179,7 +179,7 @@ class Transformer(nn.Module):
         self.linear = nn.Linear(d_model, d_model)
         self.softmax = nn.Softmax()
 
-    def forward(self, src, tgt, tgt_mask): # tgt_mask = [[1],[1],[1],[0],[0],...]
+    def forward(self, src, tgt, tgt_mask): # tgt_mask = [[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
         src = self.pos_enc(src)
         tgt = self.pos_enc(tgt)
         x = self.transformer_encoder(src)
