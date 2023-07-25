@@ -4,3 +4,4 @@ test.ipynb
 .ipynb_checkpoints/
 test.model
 test.vocab
+model.ckpt
