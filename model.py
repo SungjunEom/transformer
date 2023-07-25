@@ -178,15 +178,14 @@ class Transformer(nn.Module):
         self.transformer_encoder = TransformerEncoder(n_layer, n_head, d_model, d_k, dropout)
         self.transformer_decoder = TransformerDecoder(n_layer, n_head, d_model, d_k, dropout)
         self.linear = nn.Linear(d_model, 5000)
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, src, tgt, tgt_mask): # tgt_mask = [[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
-        src = self.input_embedding(src)
+        src = self.input_embedding(src) # Debug: 여기서 nan 발생
         tgt = self.input_embedding(tgt)
         src = self.pos_enc(src)
         tgt = self.pos_enc(tgt) # for translation task, create an output embedding
         x = self.transformer_encoder(src)
         output = self.transformer_decoder(tgt, x, x, tgt_mask)
-        # output = self.softmax(self.linear(output))
-        output = self.linear(output)
+        output = self.softmax(self.linear(output))
         return output
