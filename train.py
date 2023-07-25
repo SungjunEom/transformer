@@ -11,13 +11,13 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     epochs = 100
     batch_size = 4
-    lr = 1e-16
+    lr = 1e-3
     chat_data = ChatbotDataset('dataset/Q.txt', 'dataset/A.txt', 'test.vocab')
     max_len = chat_data.get_max_seq()
     vocab_size = chat_data.get_vocab_size()
     model = Transformer(3, 8, 512, 64, 0.1, vocab_size).to(device)
     train_dataloader = DataLoader(chat_data, batch_size)
-    loss_fn = nn.BCELoss().to(device)
+    loss_fn = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
     tgt_mask = torch.tril(torch.ones(max_len, max_len)).to(device)
@@ -33,17 +33,16 @@ def main():
             num = Y.shape[0]
             Y_out = Y[:,1:,:]
             Y = Y[:,:-1,:]
-            Y = torch.cat((Y,torch.Tensor(5000).unsqueeze(0).unsqueeze(0).repeat(num,1,1).to(device)),\
+            Y = torch.cat((Y,torch.zeros(5000).unsqueeze(0).unsqueeze(0).repeat(num,1,1).to(device)),\
                         dim=-2).to(device)
-            Y_out = torch.cat((torch.Tensor(5000).unsqueeze(0).unsqueeze(0).repeat(num,1,1).to(device), \
-                            Y_out), dim=-2).to(device)
+            Y_out = torch.cat((Y_out,torch.zeros(5000).unsqueeze(0).unsqueeze(0).repeat(num,1,1).to(device)),\
+                               dim=-2).to(device)
             pred = model(X, Y, tgt_mask)
-            # Y_out = torch.argmax(Y_out.int(), dim=-2)
-            print(Y_out.shape)
+            Y_out = torch.argmax(Y_out.int(), dim=-1)
+            # pred = torch.permute(pred, (0, 2, 1))
+            pred = pred.reshape(-1,vocab_size)
+            Y_out = pred.reshape(-1,vocab_size)
             loss = loss_fn(pred, Y_out)
-            # if _ == 0 and batch == 0:
-            #     print(pred)
-            #     print(Y_out)
             loss.backward()
             optimizer.step()
 
