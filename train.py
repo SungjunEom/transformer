@@ -9,9 +9,9 @@ import torch.nn.functional as F
 
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    epochs = 100
+    epochs = 200
     batch_size = 4
-    lr = 1e-3
+    lr = 1e-6
     chat_data = ChatbotDataset('dataset/Q.txt', 'dataset/A.txt', 'test.vocab')
     max_len = chat_data.get_max_seq()
     vocab_size = chat_data.get_vocab_size()
