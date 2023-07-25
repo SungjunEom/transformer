@@ -1,5 +1,6 @@
 import pandas as pd
 from torch.utils.data import Dataset
+import sentencepiece as spm
 
 class ChatbotDataset(Dataset):
     def __init__(self, q, a):
