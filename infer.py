@@ -8,7 +8,7 @@ def main():
     max_len = chat_data.get_max_seq()
     vocab_size = chat_data.get_vocab_size()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = Transformer(3, 8, 512, 64, 0.1, vocab_size).to(device)
+    model = Transformer(6, 8, 512, 64, 0.1, vocab_size).to(device)
     model.load_state_dict(torch.load('model.ckpt'))
     model.eval()
     model.to(device)

@@ -3,22 +3,33 @@ from dataset import *
 from torch.utils.data import DataLoader
 from torch import nn
 import torch.nn.functional as F
+from scheduler import CosineWarmupScheduler
+from hparams import get_args
 
 # Sentencepice BOS_ID=1, EOS_ID=2
 
+exp_args = get_args()
+device = exp_args['device']
+epochs = exp_args['epoch']
+batch_size = exp_args['batch_size']
+lr = exp_args['lr']
+n_layer = exp_args['n_layer']
+n_head = exp_args['n_head']
+d_model = exp_args['d_model']
+d_k = exp_args['d_k']
+dropout = exp_args['dropout']
+vocab_len = exp_args['vocab_len']
+
 
 def main():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    epochs = 200
-    batch_size = 4
-    lr = 1e-6
     chat_data = ChatbotDataset('dataset/Q.txt', 'dataset/A.txt', 'test.vocab')
     max_len = chat_data.get_max_seq()
     vocab_size = chat_data.get_vocab_size()
-    model = Transformer(3, 8, 512, 64, 0.1, vocab_size).to(device)
+    model = Transformer(n_layer,n_head, d_model, d_k, dropout, vocab_len).to(device)
     train_dataloader = DataLoader(chat_data, batch_size)
     loss_fn = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
+    lr_scheduler = CosineWarmupScheduler(optimizer,100,2000)
 
     tgt_mask = torch.tril(torch.ones(max_len, max_len)).to(device)
 
@@ -49,6 +60,8 @@ def main():
             if batch % 100 == 0:
                 loss, current = loss.item(), (batch + 1)
                 print(f'loss: {loss:>7f} [{current:>5d}]')
+        
+        lr_scheduler.step()
     
     torch.save(model.state_dict(),'model.ckpt')
 
