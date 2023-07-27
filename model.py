@@ -177,7 +177,6 @@ class Transformer(nn.Module):
         self.input_embedding = nn.Linear(vocab_len, d_model)
         self.transformer_encoder = TransformerEncoder(n_layer, n_head, d_model, d_k, dropout)
         self.transformer_decoder = TransformerDecoder(n_layer, n_head, d_model, d_k, dropout)
-        self.linear = nn.Linear(d_model, 5000)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, src, tgt, tgt_mask): # tgt_mask = [[1,0,0,0,0],[1,1,0,0,0],[1,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1]]
@@ -187,5 +186,6 @@ class Transformer(nn.Module):
         tgt = self.pos_enc(tgt) # for translation task, create an output embedding
         x = self.transformer_encoder(src)
         output = self.transformer_decoder(tgt, x, x, tgt_mask)
-        output = self.softmax(self.linear(output))
+        output = torch.matmul(self.input_embedding.weight.t(),output)
+        output = self.softmax(output)
         return output

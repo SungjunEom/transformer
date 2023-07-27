@@ -50,7 +50,6 @@ def main():
                                dim=-2).to(device)
             pred = model(X, Y, tgt_mask)
             Y_out = torch.argmax(Y_out.int(), dim=-1)
-            # pred = torch.permute(pred, (0, 2, 1))
             pred = pred.reshape(-1,vocab_size)
             Y_out = pred.reshape(-1,vocab_size)
             loss = loss_fn(pred, Y_out)
