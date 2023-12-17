@@ -3,7 +3,7 @@ import torch
 def get_args():
     
     exp_args = {
-        'epoch': 50,
+        'epoch': 100,
         'device': "cuda:0" if torch.cuda.is_available() else "cpu",
         'batch_size': 4,
         'lr': 1e-3,

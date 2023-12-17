@@ -2,9 +2,11 @@ from model import *
 from dataset import *
 from torch.utils.data import DataLoader
 from torch import nn
+from torch import optim
 import torch.nn.functional as F
 from scheduler import CosineWarmupScheduler
 from hparams import get_args
+import wandb
 
 # Sentencepice BOS_ID=1, EOS_ID=2
 
@@ -20,16 +22,30 @@ d_k = exp_args['d_k']
 dropout = exp_args['dropout']
 vocab_len = exp_args['vocab_len']
 
+wandb.init(
+    project="my-little-transformer",
+
+    config={
+        "learning_rate": lr,
+        "epochs": epochs,
+    }
+)
+
 
 def main():
     chat_data = ChatbotDataset('dataset/Q.txt', 'dataset/A.txt', 'test.vocab')
+    train_dataloader = DataLoader(chat_data, batch_size=4, shuffle=True)
     max_len = chat_data.get_max_seq()
     vocab_size = chat_data.get_vocab_size()
     model = Transformer(n_layer,n_head, d_model, d_k, dropout, vocab_len).to(device)
-    train_dataloader = DataLoader(chat_data, batch_size)
+
     loss_fn = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
-    lr_scheduler = CosineWarmupScheduler(optimizer,100,2000)
+    # lr_scheduler = CosineWarmupScheduler(optimizer,100,2000)
+    lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer,
+                                        lr_lambda=lambda epoch: 0.95 ** epoch,
+                                        last_epoch=-1,
+                                        verbose=False)
 
     tgt_mask = torch.tril(torch.ones(max_len, max_len)).to(device)
 
@@ -59,6 +75,8 @@ def main():
             if batch % 100 == 0:
                 loss, current = loss.item(), (batch + 1)
                 print(f'loss: {loss:>7f} [{current:>5d}]')
+
+            wandb.log({"loss": loss})
         
         lr_scheduler.step()
     

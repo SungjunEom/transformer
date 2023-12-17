@@ -183,7 +183,7 @@ class Transformer(nn.Module):
         src = self.input_embedding(src) # Debug: 여기서 nan 발생
         tgt = self.input_embedding(tgt)
         src = self.pos_enc(src)
-        tgt = self.pos_enc(tgt) # for translation task, create an output embedding
+        tgt = self.pos_enc(tgt) # for a translation task, create an output embedding
         x = self.transformer_encoder(src)
         output = self.transformer_decoder(tgt, x, x, tgt_mask)
         output = torch.matmul(self.input_embedding.weight.t(),output)
